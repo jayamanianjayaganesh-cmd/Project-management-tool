@@ -1,0 +1,1914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MiniTrack v2 — Issue Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,400&family=Figtree:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* =====================================================
+       DESIGN TOKENS
+       ===================================================== */
+    :root {
+      --paper:        #F5F0E8;
+      --paper-mid:    #EDE6D6;
+      --paper-dark:   #E2D9C5;
+      --ink:          #1C1917;
+      --ink-light:    #6B6359;
+      --ink-faint:    #A89F94;
+      --rule:         #D9D0BF;
+      --white:        #FFFFFF;
+
+      --todo-accent:  #78716C;
+      --prog-accent:  #3B6FD4;
+      --done-accent:  #2D8A5E;
+
+      --low:          #2D8A5E;
+      --low-bg:       #DCFBEC;
+      --med:          #B45309;
+      --med-bg:       #FEF3C7;
+      --high:         #B91C1C;
+      --high-bg:      #FEE2E2;
+
+      --radius-sm:    6px;
+      --radius-md:    12px;
+      --radius-lg:    18px;
+      --shadow-card:  0 1px 3px rgba(28,25,23,0.07), 0 4px 14px rgba(28,25,23,0.06);
+      --shadow-modal: 0 12px 60px rgba(28,25,23,0.25);
+      --shadow-drag:  0 16px 48px rgba(28,25,23,0.22);
+    }
+
+    /* =====================================================
+       RESET + BASE
+       ===================================================== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Figtree', sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      min-height: 100vh;
+      background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23C8BC9E' fill-opacity='0.16'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    button { font-family: 'Figtree', sans-serif; cursor: pointer; }
+
+    /* =====================================================
+       HEADER
+       ===================================================== */
+    header {
+      background: var(--ink);
+      color: #fff;
+      padding: 0 28px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 300;
+      gap: 16px;
+    }
+
+    .brand { display: flex; align-items: baseline; gap: 3px; flex-shrink: 0; }
+
+    .brand-name {
+      font-family: 'Fraunces', serif;
+      font-size: 1.2rem;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-tag {
+      font-size: 0.6rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-left: 8px;
+      padding: 2px 7px;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 99px;
+    }
+
+    /* ── Search bar ── */
+    .search-wrap {
+      flex: 1;
+      max-width: 320px;
+      position: relative;
+    }
+
+    .search-wrap svg {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    #searchInput {
+      width: 100%;
+      padding: 8px 12px 8px 34px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: var(--radius-sm);
+      font-family: 'Figtree', sans-serif;
+      font-size: 0.82rem;
+      color: #fff;
+      outline: none;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    #searchInput::placeholder { color: rgba(255,255,255,0.35); }
+    #searchInput:focus {
+      background: rgba(255,255,255,0.16);
+      border-color: rgba(255,255,255,0.4);
+    }
+
+    /* ── Header right side ── */
+    .header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+    .header-stats { display: flex; gap: 5px; }
+
+    .stat-pill {
+      padding: 4px 11px;
+      border-radius: 99px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      border: 1px solid rgba(255,255,255,0.14);
+      color: rgba(255,255,255,0.65);
+    }
+
+    .stat-pill span { color: #fff; margin-right: 3px; font-weight: 700; }
+
+    .btn-create {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px;
+      background: #fff;
+      color: var(--ink);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      transition: background 0.15s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn-create:hover  { background: #F0EBE0; }
+    .btn-create:active { transform: scale(0.97); }
+
+    /* =====================================================
+       TOOLBAR — filter bar below header
+       ===================================================== */
+    .toolbar {
+      padding: 12px 28px;
+      border-bottom: 1.5px solid var(--rule);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--paper);
+      position: sticky;
+      top: 56px;
+      z-index: 200;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--ink-light);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* Priority filter pills */
+    .filter-group { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .filter-btn {
+      padding: 5px 13px;
+      border-radius: 99px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      border: 1.5px solid var(--rule);
+      background: var(--white);
+      color: var(--ink-light);
+      transition: all 0.15s;
+      letter-spacing: 0.03em;
+    }
+
+    .filter-btn:hover { border-color: var(--ink); color: var(--ink); }
+
+    .filter-btn.active {
+      background: var(--ink);
+      color: #fff;
+      border-color: var(--ink);
+    }
+
+    .filter-btn.f-high.active   { background: var(--high); border-color: var(--high); }
+    .filter-btn.f-medium.active { background: var(--med);  border-color: var(--med); }
+    .filter-btn.f-low.active    { background: var(--low);  border-color: var(--low); }
+
+    .toolbar-sep {
+      width: 1px;
+      height: 20px;
+      background: var(--rule);
+      flex-shrink: 0;
+    }
+
+    /* Result count indicator */
+    .result-count {
+      font-size: 0.72rem;
+      color: var(--ink-faint);
+      font-style: italic;
+      margin-left: auto;
+    }
+
+    /* =====================================================
+       KANBAN BOARD
+       ===================================================== */
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      min-height: calc(100vh - 56px - 53px);
+    }
+
+    .column {
+      border-right: 1.5px solid var(--rule);
+      display: flex;
+      flex-direction: column;
+      /* Drop zone transition */
+      transition: background 0.2s;
+    }
+
+    .column:last-child { border-right: none; }
+
+    /* Drag-over highlight */
+    .column.drag-over {
+      background: rgba(59,111,212,0.04);
+    }
+
+    .col-header {
+      padding: 13px 18px 11px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1.5px solid var(--rule);
+      background: var(--paper);
+    }
+
+    .col-label { display: flex; align-items: center; gap: 8px; }
+
+    .col-indicator {
+      width: 3px; height: 18px;
+      border-radius: 99px;
+    }
+
+    .col-indicator.todo     { background: var(--todo-accent); }
+    .col-indicator.progress { background: var(--prog-accent); }
+    .col-indicator.done     { background: var(--done-accent); }
+
+    .col-name {
+      font-family: 'Fraunces', serif;
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+
+    .col-badge {
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 99px;
+      border: 1.5px solid var(--rule);
+      color: var(--ink-light);
+      background: var(--paper-mid);
+      min-width: 24px;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .card-list {
+      flex: 1;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      overflow-y: auto;
+      min-height: 120px;
+    }
+
+    /* Drop placeholder shown while dragging */
+    .drop-placeholder {
+      border: 2px dashed var(--prog-accent);
+      border-radius: var(--radius-md);
+      height: 80px;
+      background: rgba(59,111,212,0.04);
+      flex-shrink: 0;
+      animation: placeholderPulse 1s ease infinite alternate;
+    }
+
+    @keyframes placeholderPulse {
+      from { opacity: 0.5; }
+      to   { opacity: 1; }
+    }
+
+    .empty-state {
+      padding: 28px 14px;
+      text-align: center;
+      border: 2px dashed var(--rule);
+      border-radius: var(--radius-md);
+      color: var(--ink-light);
+      transition: border-color 0.2s;
+    }
+
+    .column.drag-over .empty-state { border-color: var(--prog-accent); }
+
+    .empty-icon  { font-size: 1.4rem; display: block; margin-bottom: 7px; opacity: 0.45; }
+    .empty-text  { font-size: 0.76rem; font-style: italic; }
+
+    /* =====================================================
+       ISSUE CARD
+       ===================================================== */
+    .issue-card {
+      background: var(--white);
+      border: 1.5px solid var(--rule);
+      border-radius: var(--radius-md);
+      padding: 13px 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: var(--shadow-card);
+      position: relative;
+      overflow: hidden;
+      animation: cardIn 0.25s ease both;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s;
+      /* Drag handle cursor */
+      cursor: grab;
+    }
+
+    .issue-card:active { cursor: grabbing; }
+
+    /* Priority top-border */
+    .issue-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: var(--radius-md) var(--radius-md) 0 0;
+    }
+
+    .issue-card.p-high::after   { background: var(--high); }
+    .issue-card.p-medium::after { background: var(--med); }
+    .issue-card.p-low::after    { background: var(--low); }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(8px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .issue-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 22px rgba(28,25,23,0.12);
+    }
+
+    /* Card being dragged */
+    .issue-card.dragging {
+      opacity: 0.35;
+      transform: scale(0.97);
+      cursor: grabbing;
+    }
+
+    /* Card filtered out (hidden by search/priority filter) */
+    .issue-card.hidden {
+      display: none;
+    }
+
+    .card-key {
+      font-size: 0.63rem;
+      font-weight: 600;
+      color: var(--ink-faint);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .card-title {
+      font-family: 'Fraunces', serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      line-height: 1.4;
+      color: var(--ink);
+    }
+
+    .card-desc {
+      font-size: 0.77rem;
+      color: var(--ink-light);
+      line-height: 1.55;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .badge {
+      font-size: 0.6rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: var(--radius-sm);
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+
+    .badge.high   { color: var(--high); background: var(--high-bg); }
+    .badge.medium { color: var(--med);  background: var(--med-bg);  }
+    .badge.low    { color: var(--low);  background: var(--low-bg);  }
+
+    .assignee {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.71rem;
+      color: var(--ink-light);
+      font-weight: 500;
+      max-width: 50%;
+      overflow: hidden;
+    }
+
+    .avatar {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.52rem;
+      font-weight: 800;
+      flex-shrink: 0;
+      color: #fff;
+    }
+
+    .av-a { background: #3B6FD4; }
+    .av-b { background: #2D8A5E; }
+    .av-c { background: #B45309; }
+    .av-d { background: #7C3AED; }
+    .av-e { background: #DB2777; }
+
+    .assignee-name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Comment count chip */
+    .comment-count {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.68rem;
+      color: var(--ink-faint);
+      font-weight: 500;
+    }
+
+    /* Card action buttons */
+    .card-actions {
+      display: flex;
+      gap: 6px;
+      border-top: 1px solid var(--rule);
+      padding-top: 9px;
+    }
+
+    .btn-action {
+      flex: 1;
+      padding: 6px 8px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--ink-light);
+      background: var(--paper);
+      border: 1.5px solid var(--rule);
+      border-radius: var(--radius-sm);
+      text-align: center;
+      letter-spacing: 0.02em;
+      transition: all 0.15s;
+    }
+
+    .btn-action:hover {
+      background: var(--ink);
+      color: #fff;
+      border-color: var(--ink);
+    }
+
+    .btn-action.btn-view:hover {
+      background: var(--prog-accent);
+      border-color: var(--prog-accent);
+    }
+
+    .btn-action.btn-del:hover {
+      background: var(--high-bg);
+      border-color: var(--high);
+      color: var(--high);
+    }
+
+    /* =====================================================
+       OVERLAY (shared for all modals)
+       ===================================================== */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(28,25,23,0.6);
+      backdrop-filter: blur(4px);
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .overlay.open { display: flex; }
+
+    /* =====================================================
+       CREATE / EDIT MODAL
+       ===================================================== */
+    .modal {
+      background: var(--paper);
+      border: 1.5px solid var(--rule);
+      border-radius: var(--radius-lg);
+      padding: 32px 32px 28px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: var(--shadow-modal);
+      position: relative;
+      animation: modalIn 0.26s cubic-bezier(0.34,1.56,0.64,1) both;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.9) translateY(14px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .modal-head {
+      margin-bottom: 24px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .modal-title {
+      font-family: 'Fraunces', serif;
+      font-size: 1.4rem;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+
+    .modal-subtitle {
+      font-size: 0.73rem;
+      color: var(--ink-light);
+      margin-top: 3px;
+      display: block;
+    }
+
+    .btn-close {
+      background: none;
+      border: 1.5px solid var(--rule);
+      border-radius: var(--radius-sm);
+      width: 30px; height: 30px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--ink-light);
+      font-size: 0.95rem;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .btn-close:hover { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+    /* Form fields */
+    .form-group { margin-bottom: 15px; }
+
+    .form-group label {
+      display: block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--ink-light);
+      margin-bottom: 5px;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 9px 12px;
+      background: var(--white);
+      border: 1.5px solid var(--rule);
+      border-radius: var(--radius-sm);
+      font-family: 'Figtree', sans-serif;
+      font-size: 0.86rem;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      border-color: var(--ink);
+      box-shadow: 0 0 0 3px rgba(28,25,23,0.07);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 78px;
+      line-height: 1.6;
+    }
+
+    .form-group select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' stroke='%236B6359' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 34px;
+    }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .form-divider { height: 1px; background: var(--rule); margin: 18px 0; }
+
+    .btn-submit {
+      width: 100%;
+      padding: 12px;
+      background: var(--ink);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: 'Fraunces', serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .btn-submit:hover  { background: #3a3531; }
+    .btn-submit:active { transform: scale(0.98); }
+
+    /* =====================================================
+       ISSUE DETAIL MODAL (view + comments + edit)
+       ===================================================== */
+    .detail-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(28,25,23,0.6);
+      backdrop-filter: blur(4px);
+      z-index: 500;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 32px 20px;
+      overflow-y: auto;
+    }
+
+    .detail-overlay.open { display: flex; }
+
+    .detail-modal {
+      background: var(--paper);
+      border: 1.5px solid var(--rule);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 640px;
+      box-shadow: var(--shadow-modal);
+      animation: modalIn 0.26s cubic-bezier(0.34,1.56,0.64,1) both;
+      overflow: hidden;
+      margin: auto;
+    }
+
+    /* Coloured banner at top of detail modal */
+    .detail-banner {
+      height: 5px;
+    }
+
+    .detail-banner.p-high   { background: var(--high); }
+    .detail-banner.p-medium { background: var(--med); }
+    .detail-banner.p-low    { background: var(--low); }
+
+    .detail-body { padding: 28px 30px 0; }
+
+    .detail-toprow {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .detail-key-status { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    .detail-key {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--ink-faint);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .detail-status-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 9px;
+      border-radius: 99px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border: 1.5px solid var(--rule);
+      color: var(--ink-light);
+      background: var(--paper-mid);
+    }
+
+    .detail-actions { display: flex; gap: 7px; }
+
+    .btn-icon {
+      padding: 6px 12px;
+      border: 1.5px solid var(--rule);
+      border-radius: var(--radius-sm);
+      background: var(--white);
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--ink-light);
+      transition: all 0.15s;
+    }
+
+    .btn-icon:hover { border-color: var(--ink); color: var(--ink); }
+
+    .btn-icon.btn-edit-detail:hover {
+      background: var(--ink);
+      color: #fff;
+      border-color: var(--ink);
+    }
+
+    .btn-icon.btn-del-detail:hover {
+      background: var(--high-bg);
+      border-color: var(--high);
+      color: var(--high);
+    }
+
+    .detail-title {
+      font-family: 'Fraunces', serif;
+      font-size: 1.4rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      margin-bottom: 12px;
+    }
+
+    .detail-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .detail-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.76rem;
+      color: var(--ink-light);
+    }
+
+    .detail-meta-item strong {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--ink-faint);
+      margin-right: 2px;
+    }
+
+    .detail-desc-section {
+      margin-bottom: 20px;
+    }
+
+    .detail-section-title {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--ink-light);
+      margin-bottom: 8px;
+    }
+
+    .detail-desc-text {
+      font-size: 0.85rem;
+      line-height: 1.7;
+      color: var(--ink);
+      background: var(--white);
+      border: 1.5px solid var(--rule);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      white-space: pre-wrap;
+      min-height: 50px;
+    }
+
+    .detail-desc-empty {
+      font-size: 0.82rem;
+      color: var(--ink-faint);
+      font-style: italic;
+    }
+
+    /* ── Comments section ── */
+    .comments-section {
+      border-top: 1.5px solid var(--rule);
+      padding: 22px 30px 28px;
+    }
+
+    .comments-title {
+      font-family: 'Fraunces', serif;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .comments-count {
+      font-family: 'Figtree', sans-serif;
+      font-size: 0.68rem;
+      font-weight: 600;
+      background: var(--paper-mid);
+      border: 1.5px solid var(--rule);
+      color: var(--ink-light);
+      padding: 1px 8px;
+      border-radius: 99px;
+    }
+
+    /* Individual comment */
+    .comment-item {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+      animation: cardIn 0.2s ease both;
+    }
+
+    .comment-avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--paper-dark);
+      border: 1.5px solid var(--rule);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 800;
+      color: var(--ink-light);
+      flex-shrink: 0;
+    }
+
+    .comment-body {
+      flex: 1;
+      background: var(--white);
+      border: 1.5px solid var(--rule);
+      border-radius: 0 var(--radius-md) var(--radius-md) var(--radius-md);
+      padding: 10px 13px;
+    }
+
+    .comment-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 5px;
+    }
+
+    .comment-author {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .comment-time {
+      font-size: 0.65rem;
+      color: var(--ink-faint);
+    }
+
+    .comment-text {
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--ink);
+      white-space: pre-wrap;
+    }
+
+    .btn-del-comment {
+      font-size: 0.6rem;
+      color: var(--ink-faint);
+      background: none;
+      border: none;
+      padding: 0;
+      margin-left: 8px;
+      transition: color 0.15s;
+    }
+
+    .btn-del-comment:hover { color: var(--high); }
+
+    /* Add comment form */
+    .add-comment {
+      display: flex;
+      gap: 9px;
+      margin-top: 4px;
+    }
+
+    .add-comment .comment-avatar { flex-shrink: 0; }
+
+    .comment-input-wrap { flex: 1; }
+
+    #commentText {
+      width: 100%;
+      padding: 9px 12px;
+      background: var(--white);
+      border: 1.5px solid var(--rule);
+      border-radius: var(--radius-md);
+      font-family: 'Figtree', sans-serif;
+      font-size: 0.83rem;
+      color: var(--ink);
+      outline: none;
+      resize: none;
+      min-height: 68px;
+      line-height: 1.55;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    #commentText:focus {
+      border-color: var(--ink);
+      box-shadow: 0 0 0 3px rgba(28,25,23,0.07);
+    }
+
+    #commentText::placeholder { color: var(--ink-faint); }
+
+    .comment-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+      gap: 10px;
+    }
+
+    #commentAuthor {
+      flex: 1;
+      padding: 7px 10px;
+      background: var(--white);
+      border: 1.5px solid var(--rule);
+      border-radius: var(--radius-sm);
+      font-family: 'Figtree', sans-serif;
+      font-size: 0.8rem;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    #commentAuthor:focus { border-color: var(--ink); }
+    #commentAuthor::placeholder { color: var(--ink-faint); }
+
+    .btn-add-comment {
+      padding: 7px 16px;
+      background: var(--ink);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 0.78rem;
+      font-weight: 700;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-add-comment:hover { background: #3a3531; }
+
+    .no-comments {
+      font-size: 0.8rem;
+      color: var(--ink-faint);
+      font-style: italic;
+      padding: 8px 0 12px;
+    }
+
+    /* Close detail modal button */
+    .detail-close-row {
+      display: flex;
+      justify-content: flex-end;
+      padding: 0 30px 20px;
+    }
+
+    .btn-close-detail {
+      padding: 8px 20px;
+      border: 1.5px solid var(--rule);
+      border-radius: var(--radius-sm);
+      background: var(--white);
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--ink-light);
+      transition: all 0.15s;
+    }
+
+    .btn-close-detail:hover { border-color: var(--ink); color: var(--ink); }
+
+    /* =====================================================
+       TOAST
+       ===================================================== */
+    .toast {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--ink);
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 99px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.28);
+      z-index: 9999;
+      opacity: 0;
+      transition: transform 0.32s cubic-bezier(0.34,1.56,0.64,1), opacity 0.32s;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* =====================================================
+       SEARCH HIGHLIGHT
+       ===================================================== */
+    .highlight {
+      background: #FEF08A;
+      border-radius: 2px;
+      padding: 0 1px;
+    }
+
+    /* =====================================================
+       RESPONSIVE
+       ===================================================== */
+    @media (max-width: 900px) {
+      .board { grid-template-columns: 1fr; }
+      .column { border-right: none; border-bottom: 1.5px solid var(--rule); }
+      .column:last-child { border-bottom: none; }
+      .header-stats { display: none; }
+      .search-wrap { max-width: 200px; }
+    }
+
+    @media (max-width: 600px) {
+      header { padding: 0 14px; gap: 10px; }
+      .toolbar { padding: 10px 14px; }
+      .board { grid-template-columns: 1fr; }
+      .detail-body { padding: 20px 18px 0; }
+      .comments-section { padding: 18px 18px 24px; }
+      .detail-close-row { padding: 0 18px 18px; }
+      .modal { padding: 24px 18px 22px; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════
+       HEADER
+  ══════════════════════════════════════ -->
+  <header>
+    <div class="brand">
+      <span class="brand-name">MiniTrack</span>
+      <span class="brand-tag">v2</span>
+    </div>
+
+    <!-- 🔍 Search bar -->
+    <div class="search-wrap">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+        <circle cx="6" cy="6" r="4.5" stroke="white" stroke-width="1.5"/>
+        <path d="M9.5 9.5L12.5 12.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <input type="text" id="searchInput" placeholder="Search issues…" oninput="applyFilters()" autocomplete="off" />
+    </div>
+
+    <div class="header-right">
+      <div class="header-stats">
+        <div class="stat-pill"><span id="hd-total">0</span> Total</div>
+        <div class="stat-pill"><span id="hd-open">0</span> Open</div>
+        <div class="stat-pill"><span id="hd-done">0</span> Done</div>
+      </div>
+
+      <button class="btn-create" onclick="openCreateModal()">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          <path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Create Issue
+      </button>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════
+       TOOLBAR — priority filter
+  ══════════════════════════════════════ -->
+  <div class="toolbar">
+    <span class="toolbar-label">Filter</span>
+    <div class="filter-group">
+      <button class="filter-btn active" data-filter="all"    onclick="setFilter('all',this)">All</button>
+      <button class="filter-btn f-high"   data-filter="high"   onclick="setFilter('high',this)">🔴 High</button>
+      <button class="filter-btn f-medium" data-filter="medium" onclick="setFilter('medium',this)">🟡 Medium</button>
+      <button class="filter-btn f-low"    data-filter="low"    onclick="setFilter('low',this)">🟢 Low</button>
+    </div>
+    <div class="toolbar-sep"></div>
+    <span class="result-count" id="resultCount"></span>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       KANBAN BOARD
+  ══════════════════════════════════════ -->
+  <div class="board">
+
+    <!-- TO DO -->
+    <div class="column" id="col-todo"
+         ondragover="onDragOver(event,'todo')"
+         ondragleave="onDragLeave(event,'todo')"
+         ondrop="onDrop(event,'todo')">
+      <div class="col-header">
+        <div class="col-label">
+          <div class="col-indicator todo"></div>
+          <span class="col-name">To Do</span>
+        </div>
+        <span class="col-badge" id="badge-todo">0</span>
+      </div>
+      <div class="card-list" id="list-todo"></div>
+    </div>
+
+    <!-- IN PROGRESS -->
+    <div class="column" id="col-progress"
+         ondragover="onDragOver(event,'progress')"
+         ondragleave="onDragLeave(event,'progress')"
+         ondrop="onDrop(event,'progress')">
+      <div class="col-header">
+        <div class="col-label">
+          <div class="col-indicator progress"></div>
+          <span class="col-name">In Progress</span>
+        </div>
+        <span class="col-badge" id="badge-progress">0</span>
+      </div>
+      <div class="card-list" id="list-progress"></div>
+    </div>
+
+    <!-- DONE -->
+    <div class="column" id="col-done"
+         ondragover="onDragOver(event,'done')"
+         ondragleave="onDragLeave(event,'done')"
+         ondrop="onDrop(event,'done')">
+      <div class="col-header">
+        <div class="col-label">
+          <div class="col-indicator done"></div>
+          <span class="col-name">Done</span>
+        </div>
+        <span class="col-badge" id="badge-done">0</span>
+      </div>
+      <div class="card-list" id="list-done"></div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════
+       CREATE / EDIT MODAL
+  ══════════════════════════════════════ -->
+  <div class="overlay" id="formOverlay">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <div class="modal-title" id="formModalTitle">New Issue</div>
+          <span class="modal-subtitle" id="formModalSub">Fill in the details and click Create</span>
+        </div>
+        <button class="btn-close" onclick="closeFormModal()">✕</button>
+      </div>
+
+      <form id="issueForm" onsubmit="handleFormSubmit(event)" novalidate>
+        <input type="hidden" id="editingId" value="" />
+
+        <div class="form-group">
+          <label for="fTitle">Issue Title *</label>
+          <input type="text" id="fTitle" placeholder="e.g. Fix broken login redirect" maxlength="120" required />
+        </div>
+
+        <div class="form-group">
+          <label for="fDesc">Description</label>
+          <textarea id="fDesc" placeholder="Describe the issue, steps to reproduce…"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fPriority">Priority *</label>
+            <select id="fPriority" required>
+              <option value="">Select…</option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="fStatus">Status *</label>
+            <select id="fStatus" required>
+              <option value="">Select…</option>
+              <option value="todo">To Do</option>
+              <option value="progress">In Progress</option>
+              <option value="done">Done</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="fAssignee">Assignee *</label>
+          <input type="text" id="fAssignee" placeholder="e.g. Jordan Lee" maxlength="60" required />
+        </div>
+
+        <div class="form-divider"></div>
+        <button type="submit" class="btn-submit" id="formSubmitBtn">Create Issue →</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       ISSUE DETAIL MODAL (view + comments)
+  ══════════════════════════════════════ -->
+  <div class="detail-overlay" id="detailOverlay">
+    <div class="detail-modal" id="detailModal">
+
+      <!-- Priority colour banner -->
+      <div class="detail-banner" id="detailBanner"></div>
+
+      <div class="detail-body">
+        <!-- Top row: key + status + actions -->
+        <div class="detail-toprow">
+          <div class="detail-key-status">
+            <span class="detail-key" id="detailKey"></span>
+            <span class="detail-status-badge" id="detailStatusBadge"></span>
+            <span class="badge" id="detailPriBadge"></span>
+          </div>
+          <div class="detail-actions">
+            <button class="btn-icon btn-edit-detail" id="btnEditDetail" onclick="openEditFromDetail()">✏ Edit</button>
+            <button class="btn-icon btn-del-detail"  id="btnDelDetail"  onclick="deleteFromDetail()">✕ Delete</button>
+            <button class="btn-close" onclick="closeDetailModal()" style="margin-left:2px" title="Close">✕</button>
+          </div>
+        </div>
+
+        <!-- Title -->
+        <div class="detail-title" id="detailTitle"></div>
+
+        <!-- Meta row -->
+        <div class="detail-meta" id="detailMeta"></div>
+
+        <!-- Description -->
+        <div class="detail-desc-section">
+          <div class="detail-section-title">Description</div>
+          <div id="detailDesc"></div>
+        </div>
+      </div>
+
+      <!-- Comments section -->
+      <div class="comments-section">
+        <div class="comments-title">
+          Comments
+          <span class="comments-count" id="commentsCount">0</span>
+        </div>
+
+        <!-- List of existing comments -->
+        <div id="commentsList"></div>
+
+        <!-- Add new comment form -->
+        <div class="add-comment">
+          <div class="comment-avatar" id="addCommentAvatar">?</div>
+          <div class="comment-input-wrap">
+            <textarea id="commentText" placeholder="Write a comment…" rows="2"></textarea>
+            <div class="comment-footer">
+              <input type="text" id="commentAuthor" placeholder="Your name" maxlength="40" oninput="updateCommentAvatar()" />
+              <button class="btn-add-comment" onclick="addComment()">Add Comment</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-close-row">
+        <button class="btn-close-detail" onclick="closeDetailModal()">← Back to Board</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+
+  <!-- ══════════════════════════════════════
+       JAVASCRIPT
+  ══════════════════════════════════════ -->
+  <script>
+
+    /* =====================================================
+       DATA — load from localStorage or start fresh
+       ===================================================== */
+    let issues  = JSON.parse(localStorage.getItem('mt2_issues')  || '[]');
+    let counter = parseInt(localStorage.getItem('mt2_counter') || '1');
+
+    // Currently open issue ID in the detail modal
+    let detailIssueId = null;
+
+    // Active priority filter ('all', 'high', 'medium', 'low')
+    let activeFilter = 'all';
+
+    // ID of the card being dragged
+    let draggingId = null;
+
+
+    /* =====================================================
+       PERSIST helpers
+       ===================================================== */
+    function persist() {
+      localStorage.setItem('mt2_issues', JSON.stringify(issues));
+    }
+
+
+    /* =====================================================
+       UTILITY FUNCTIONS
+       ===================================================== */
+
+    // Escape HTML to prevent XSS
+    function safe(str) {
+      return String(str || '')
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // Get up-to-2 initials from a name
+    function initials(name) {
+      return String(name || '?').trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0,2) || '?';
+    }
+
+    // Consistent avatar colour class from name
+    const AV = ['av-a','av-b','av-c','av-d','av-e'];
+    function avClass(name) {
+      let h = 0; for (let c of String(name)) h += c.charCodeAt(0);
+      return AV[h % AV.length];
+    }
+
+    // Status cycle for the move button
+    function nextStatus(s) {
+      return s === 'todo' ? 'progress' : s === 'progress' ? 'done' : 'todo';
+    }
+
+    function statusLabel(s) {
+      return s === 'todo' ? 'To Do' : s === 'progress' ? 'In Progress' : 'Done';
+    }
+
+    function moveLabel(s) {
+      return s === 'todo' ? '▶ In Progress' : s === 'progress' ? '✓ Mark Done' : '↺ Reopen';
+    }
+
+    // Format a timestamp to a relative or absolute string
+    function timeAgo(ts) {
+      const diff = Date.now() - ts;
+      const m = Math.floor(diff / 60000);
+      if (m < 1)  return 'just now';
+      if (m < 60) return `${m}m ago`;
+      const h = Math.floor(m / 60);
+      if (h < 24) return `${h}h ago`;
+      return new Date(ts).toLocaleDateString('en-US', { month:'short', day:'numeric' });
+    }
+
+    // Wrap matched search text in a <mark> highlight span
+    function highlight(text, query) {
+      if (!query) return safe(text);
+      const re = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi');
+      return safe(text).replace(re, '<mark class="highlight">$1</mark>');
+    }
+
+
+    /* =====================================================
+       BUILD CARD HTML
+       ===================================================== */
+    function buildCard(issue, searchQuery) {
+      const ini    = initials(issue.assignee);
+      const avCls  = avClass(issue.assignee);
+      const commentCount = (issue.comments || []).length;
+      const titleHtml = highlight(issue.title, searchQuery);
+
+      return `
+        <div class="issue-card p-${issue.priority}"
+             id="card-${issue.id}"
+             draggable="true"
+             ondragstart="onDragStart(event, ${issue.id})"
+             ondragend="onDragEnd(event, ${issue.id})">
+
+          <div class="card-key">MIT-${issue.id}</div>
+          <div class="card-title">${titleHtml}</div>
+
+          ${issue.desc ? `<p class="card-desc">${safe(issue.desc)}</p>` : ''}
+
+          <div class="card-meta">
+            <span class="badge ${issue.priority}">${issue.priority}</span>
+            <div class="assignee">
+              <div class="avatar ${avCls}">${ini}</div>
+              <span class="assignee-name">${safe(issue.assignee)}</span>
+            </div>
+          </div>
+
+          ${commentCount > 0 ? `
+            <div class="comment-count">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M10 1H2a1 1 0 00-1 1v6a1 1 0 001 1h1v2l3-2h4a1 1 0 001-1V2a1 1 0 00-1-1z" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+              ${commentCount} comment${commentCount !== 1 ? 's' : ''}
+            </div>
+          ` : ''}
+
+          <div class="card-actions">
+            <button class="btn-action btn-view" onclick="openDetailModal(${issue.id})">👁 View</button>
+            <button class="btn-action" onclick="moveIssue(${issue.id})">${moveLabel(issue.status)}</button>
+            <button class="btn-action" onclick="openEditModal(${issue.id})" title="Edit">✏</button>
+            <button class="btn-action btn-del" onclick="deleteIssue(${issue.id})" title="Delete">✕</button>
+          </div>
+        </div>
+      `;
+    }
+
+
+    /* =====================================================
+       RENDER BOARD
+       Clears and redraws all columns, applying search + filter.
+       ===================================================== */
+    function renderBoard() {
+      const searchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
+
+      const lists = {
+        todo:     document.getElementById('list-todo'),
+        progress: document.getElementById('list-progress'),
+        done:     document.getElementById('list-done'),
+      };
+
+      // Clear all columns
+      Object.values(lists).forEach(el => { el.innerHTML = ''; });
+
+      const counts = { todo: 0, progress: 0, done: 0 };
+      let visibleCount = 0;
+
+      issues.forEach(issue => {
+        // Determine if this card passes the current filters
+        const matchesPriority = activeFilter === 'all' || issue.priority === activeFilter;
+        const matchesSearch   = !searchQuery || issue.title.toLowerCase().includes(searchQuery);
+        const visible = matchesPriority && matchesSearch;
+
+        // Still render the card (for drag-drop) but hide it if filtered
+        const cardHtml = buildCard(issue, visible ? searchQuery : '');
+
+        // Wrap with a span so we can set display:none on it
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = cardHtml;
+        const cardEl = wrapper.firstElementChild;
+
+        if (!visible) {
+          cardEl.classList.add('hidden');
+        } else {
+          counts[issue.status]++;
+          visibleCount++;
+        }
+
+        lists[issue.status].appendChild(cardEl);
+      });
+
+      // Show empty states for any column with no visible cards
+      const emptyMessages = {
+        todo:     { icon: '🗒', text: 'No issues here' },
+        progress: { icon: '⏳', text: 'Nothing in progress' },
+        done:     { icon: '✅', text: 'No completed issues' },
+      };
+
+      ['todo','progress','done'].forEach(col => {
+        if (counts[col] === 0) {
+          const m = emptyMessages[col];
+          const emp = document.createElement('div');
+          emp.className = 'empty-state';
+          emp.innerHTML = `<span class="empty-icon">${m.icon}</span><p class="empty-text">${m.text}</p>`;
+          lists[col].appendChild(emp);
+        }
+        document.getElementById('badge-' + col).textContent = counts[col];
+      });
+
+      // Update header stats (always reflects ALL issues, not filtered)
+      const allCounts = { todo: 0, progress: 0, done: 0 };
+      issues.forEach(i => allCounts[i.status]++);
+      document.getElementById('hd-total').textContent = issues.length;
+      document.getElementById('hd-open').textContent  = allCounts.todo + allCounts.progress;
+      document.getElementById('hd-done').textContent  = allCounts.done;
+
+      // Result count label
+      const rc = document.getElementById('resultCount');
+      if (searchQuery || activeFilter !== 'all') {
+        rc.textContent = `${visibleCount} of ${issues.length} shown`;
+      } else {
+        rc.textContent = '';
+      }
+    }
+
+
+    /* =====================================================
+       SEARCH + FILTER
+       ===================================================== */
+
+    // Called on every keystroke in the search box
+    function applyFilters() {
+      renderBoard();
+    }
+
+    // Called when a priority filter button is clicked
+    function setFilter(priority, btn) {
+      activeFilter = priority;
+      // Toggle .active class on filter buttons
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderBoard();
+    }
+
+
+    /* =====================================================
+       DRAG AND DROP
+       Uses the native HTML5 Drag-and-Drop API.
+       ===================================================== */
+
+    // Called when dragging starts on a card
+    function onDragStart(event, id) {
+      draggingId = id;
+      // Store the issue ID in the drag event (for cross-browser safety)
+      event.dataTransfer.setData('text/plain', id);
+      event.dataTransfer.effectAllowed = 'move';
+
+      // Small delay so the card renders as "faded" while dragging
+      setTimeout(() => {
+        const card = document.getElementById('card-' + id);
+        if (card) card.classList.add('dragging');
+      }, 0);
+    }
+
+    // Called when dragging ends (whether dropped successfully or not)
+    function onDragEnd(event, id) {
+      const card = document.getElementById('card-' + id);
+      if (card) card.classList.remove('dragging');
+      // Remove all drag-over highlights
+      document.querySelectorAll('.column').forEach(c => c.classList.remove('drag-over'));
+      draggingId = null;
+    }
+
+    // Called continuously as a card is dragged over a column
+    function onDragOver(event, colId) {
+      // MUST call preventDefault() to allow dropping
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+      document.getElementById('col-' + colId).classList.add('drag-over');
+    }
+
+    // Called when dragging leaves a column zone
+    function onDragLeave(event, colId) {
+      // Only remove if actually leaving the column (not its children)
+      const col = document.getElementById('col-' + colId);
+      if (!col.contains(event.relatedTarget)) {
+        col.classList.remove('drag-over');
+      }
+    }
+
+    // Called when a card is dropped onto a column
+    function onDrop(event, newStatus) {
+      event.preventDefault();
+      const id = parseInt(event.dataTransfer.getData('text/plain'));
+      const issue = issues.find(i => i.id === id);
+
+      // Remove highlight from the column
+      document.getElementById('col-' + newStatus).classList.remove('drag-over');
+
+      if (!issue) return;
+
+      // Only update if the status actually changed
+      if (issue.status !== newStatus) {
+        const oldStatus = issue.status;
+        issue.status = newStatus;
+        persist();
+        renderBoard();
+        showToast(`MIT-${id} → ${statusLabel(newStatus)}`);
+      }
+    }
+
+
+    /* =====================================================
+       ACTIONS: MOVE, DELETE
+       ===================================================== */
+
+    function moveIssue(id) {
+      const issue = issues.find(i => i.id === id);
+      if (!issue) return;
+      issue.status = nextStatus(issue.status);
+      persist();
+      renderBoard();
+      // If detail modal is open for this issue, refresh it
+      if (detailIssueId === id) openDetailModal(id);
+      showToast(`Moved to ${statusLabel(issue.status)}`);
+    }
+
+    function deleteIssue(id) {
+      if (!confirm('Delete this issue? This cannot be undone.')) return;
+      issues = issues.filter(i => i.id !== id);
+      persist();
+      renderBoard();
+      if (detailIssueId === id) closeDetailModal();
+      showToast('Issue deleted');
+    }
+
+
+    /* =====================================================
+       CREATE / EDIT MODAL
+       ===================================================== */
+
+    function openCreateModal() {
+      // Reset form for creating
+      document.getElementById('issueForm').reset();
+      document.getElementById('editingId').value = '';
+      document.getElementById('formModalTitle').textContent = 'New Issue';
+      document.getElementById('formModalSub').textContent   = 'Fill in the details and click Create';
+      document.getElementById('formSubmitBtn').textContent  = 'Create Issue →';
+      document.getElementById('formOverlay').classList.add('open');
+      setTimeout(() => document.getElementById('fTitle').focus(), 80);
+    }
+
+    function openEditModal(id) {
+      const issue = issues.find(i => i.id === id);
+      if (!issue) return;
+
+      // Pre-fill the form with existing values
+      document.getElementById('editingId').value  = id;
+      document.getElementById('fTitle').value     = issue.title;
+      document.getElementById('fDesc').value      = issue.desc || '';
+      document.getElementById('fPriority').value  = issue.priority;
+      document.getElementById('fStatus').value    = issue.status;
+      document.getElementById('fAssignee').value  = issue.assignee;
+
+      document.getElementById('formModalTitle').textContent = `Edit MIT-${id}`;
+      document.getElementById('formModalSub').textContent   = 'Update the fields and save';
+      document.getElementById('formSubmitBtn').textContent  = 'Save Changes →';
+
+      document.getElementById('formOverlay').classList.add('open');
+      setTimeout(() => document.getElementById('fTitle').focus(), 80);
+    }
+
+    // Open edit from within the detail modal
+    function openEditFromDetail() {
+      if (detailIssueId == null) return;
+      closeDetailModal();
+      openEditModal(detailIssueId);
+    }
+
+    // Delete from within the detail modal
+    function deleteFromDetail() {
+      if (detailIssueId == null) return;
+      deleteIssue(detailIssueId);
+    }
+
+    function closeFormModal() {
+      document.getElementById('formOverlay').classList.remove('open');
+      document.getElementById('issueForm').reset();
+    }
+
+    // Handle both Create and Edit submissions
+    function handleFormSubmit(e) {
+      e.preventDefault();
+
+      const title    = document.getElementById('fTitle').value.trim();
+      const desc     = document.getElementById('fDesc').value.trim();
+      const priority = document.getElementById('fPriority').value;
+      const status   = document.getElementById('fStatus').value;
+      const assignee = document.getElementById('fAssignee').value.trim();
+      const editingId = document.getElementById('editingId').value;
+
+      if (!title || !priority || !status || !assignee) {
+        showToast('⚠ Please fill in all required fields');
+        return;
+      }
+
+      if (editingId) {
+        // EDIT MODE — find and update the existing issue
+        const issue = issues.find(i => i.id === parseInt(editingId));
+        if (issue) {
+          issue.title    = title;
+          issue.desc     = desc;
+          issue.priority = priority;
+          issue.status   = status;
+          issue.assignee = assignee;
+          persist();
+          renderBoard();
+          closeFormModal();
+          showToast(`✓ MIT-${issue.id} updated`);
+          // If the detail modal was open, refresh it
+          if (detailIssueId === issue.id) openDetailModal(issue.id);
+        }
+      } else {
+        // CREATE MODE — add a new issue
+        const newIssue = {
+          id:        counter,
+          title, desc, priority, status, assignee,
+          comments:  [],
+          createdAt: Date.now(),
+        };
+        issues.push(newIssue);
+        counter++;
+        localStorage.setItem('mt2_counter', counter);
+        persist();
+        renderBoard();
+        closeFormModal();
+        showToast(`✓ MIT-${newIssue.id} created`);
+      }
+    }
+
+
+    /* =====================================================
+       DETAIL MODAL — view issue + comments
+       ===================================================== */
+
+    function openDetailModal(id) {
+      const issue = issues.find(i => i.id === id);
+      if (!issue) return;
+      detailIssueId = id;
+
+      // Banner colour
+      document.getElementById('detailBanner').className = `detail-banner p-${issue.priority}`;
+
+      // Key, status, priority badges
+      document.getElementById('detailKey').textContent = `MIT-${issue.id}`;
+      document.getElementById('detailStatusBadge').textContent = statusLabel(issue.status);
+      const priBadge = document.getElementById('detailPriBadge');
+      priBadge.textContent = issue.priority;
+      priBadge.className   = `badge ${issue.priority}`;
+
+      // Title
+      document.getElementById('detailTitle').textContent = issue.title;
+
+      // Meta row
+      const ini   = initials(issue.assignee);
+      const avCls = avClass(issue.assignee);
+      document.getElementById('detailMeta').innerHTML = `
+        <div class="detail-meta-item">
+          <strong>Assignee</strong>
+          <div class="avatar ${avCls}" style="width:22px;height:22px;font-size:0.58rem">${ini}</div>
+          ${safe(issue.assignee)}
+        </div>
+        <div class="detail-meta-item">
+          <strong>Created</strong>
+          ${timeAgo(issue.createdAt)}
+        </div>
+        <div class="detail-meta-item">
+          <strong>Priority</strong>
+          <span class="badge ${issue.priority}">${issue.priority}</span>
+        </div>
+      `;
+
+      // Description
+      const descEl = document.getElementById('detailDesc');
+      if (issue.desc) {
+        descEl.innerHTML = `<div class="detail-desc-text">${safe(issue.desc)}</div>`;
+      } else {
+        descEl.innerHTML = `<p class="detail-desc-empty">No description provided.</p>`;
+      }
+
+      // Render comments
+      renderComments(issue);
+
+      // Open the overlay
+      document.getElementById('detailOverlay').classList.add('open');
+    }
+
+    function closeDetailModal() {
+      document.getElementById('detailOverlay').classList.remove('open');
+      detailIssueId = null;
+      // Clear the comment input fields
+      document.getElementById('commentText').value = '';
+    }
+
+
+    /* =====================================================
+       COMMENTS
+       ===================================================== */
+
+    function renderComments(issue) {
+      const comments = issue.comments || [];
+      const list = document.getElementById('commentsList');
+
+      document.getElementById('commentsCount').textContent = comments.length;
+
+      if (comments.length === 0) {
+        list.innerHTML = `<p class="no-comments">No comments yet. Be the first to comment!</p>`;
+        return;
+      }
+
+      list.innerHTML = comments.map((c, idx) => `
+        <div class="comment-item">
+          <div class="comment-avatar">${initials(c.author)}</div>
+          <div class="comment-body">
+            <div class="comment-meta">
+              <span class="comment-author">${safe(c.author)}</span>
+              <span class="comment-time">
+                ${timeAgo(c.createdAt)}
+                <button class="btn-del-comment" onclick="deleteComment(${issue.id}, ${idx})" title="Delete comment">✕</button>
+              </span>
+            </div>
+            <div class="comment-text">${safe(c.text)}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Updates the "add comment" avatar preview based on the name typed
+    function updateCommentAvatar() {
+      const name = document.getElementById('commentAuthor').value.trim();
+      document.getElementById('addCommentAvatar').textContent = name ? initials(name) : '?';
+    }
+
+    function addComment() {
+      const text   = document.getElementById('commentText').value.trim();
+      const author = document.getElementById('commentAuthor').value.trim() || 'Anonymous';
+
+      if (!text) {
+        showToast('⚠ Please write something before commenting');
+        return;
+      }
+
+      const issue = issues.find(i => i.id === detailIssueId);
+      if (!issue) return;
+
+      // Ensure comments array exists (for backwards compat)
+      if (!issue.comments) issue.comments = [];
+
+      // Push the new comment
+      issue.comments.push({
+        author,
+        text,
+        createdAt: Date.now(),
+      });
+
+      persist();
+      renderComments(issue);
+      renderBoard(); // update comment count chip on card
+
+      // Clear only the text area, keep the author name
+      document.getElementById('commentText').value = '';
+      showToast('💬 Comment added');
+    }
+
+    function deleteComment(issueId, commentIdx) {
+      if (!confirm('Delete this comment?')) return;
+      const issue = issues.find(i => i.id === issueId);
+      if (!issue || !issue.comments) return;
+      issue.comments.splice(commentIdx, 1);
+      persist();
+      renderComments(issue);
+      renderBoard();
+      showToast('Comment deleted');
+    }
+
+
+    /* =====================================================
+       TOAST
+       ===================================================== */
+    let toastTimer = null;
+
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+    }
+
+
+    /* =====================================================
+       KEYBOARD + CLICK OUTSIDE HANDLERS
+       ===================================================== */
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        closeFormModal();
+        closeDetailModal();
+      }
+    });
+
+    document.getElementById('formOverlay').addEventListener('click', function(e) {
+      if (e.target === this) closeFormModal();
+    });
+
+    document.getElementById('detailOverlay').addEventListener('click', function(e) {
+      if (e.target === this) closeDetailModal();
+    });
+
+
+    /* =====================================================
+       INIT — first render on page load
+       ===================================================== */
+    renderBoard();
+
+  </script>
+</body>
+</html>
